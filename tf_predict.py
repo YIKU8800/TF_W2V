@@ -146,31 +146,11 @@ saver = tf.train.Saver()
 
 # Start training
 with tf.Session() as sess:
-
-    # Run the initializer
-    sess.run(init)
-
-    for step in range(1, num_steps+1):
-        batch_x, batch_y = next_batch(batch_size, x_train, y_train)
-        # Run optimization op (backprop)
-        sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: 0.8})
-        if step % display_step == 0 or step == 1:
-            # Calculate batch loss and accuracy
-            loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
-                                                                 Y: batch_y,
-                                                                 keep_prob: 1.0})
-            print("Step " + str(step) + ", Minibatch Loss= " + \
-                  "{:.4f}".format(loss) + ", Training Accuracy= " + \
-                  "{:.3f}".format(acc))
-
-    print("Optimization Finished!")
+    # Restore variables from disk.
+    saver.restore(sess, "./save/model.ckpt")
 
     # Calculate accuracy for 256 MNIST test images
     print("Testing Accuracy:", \
-        sess.run(accuracy, feed_dict={X: x_test[:50],
-                                      Y: y_test[:50],
+        sess.run(accuracy, feed_dict={X: x_test[:499],
+                                      Y: y_test[:499],
                                       keep_prob: 1.0}))
-
-    # Save the variables to disk.
-    save_path = saver.save(sess, "./save/model.ckpt")
-    print("Model saved in path: %s" % save_path)
