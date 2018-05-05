@@ -14,14 +14,11 @@ import tensorflow as tf
 import numpy as np
 import pickle
 
+#load data
 x_train = pickle.load(open("corel5k/x_train.pkl", "rb"))
-print(x_train.shape)
 y_train = np.load(open("corel5k/y_train.npy", "rb"))
-print(y_train.shape)
 x_test = pickle.load(open("corel5k/x_test.pkl", "rb"))
-print(x_test.shape)
 y_test = np.load(open("corel5k/y_test.npy", "rb"))
-print(y_test.shape)
 
 def next_batch(num, data, labels):
     '''
@@ -37,9 +34,9 @@ def next_batch(num, data, labels):
 
 # Training Parameters
 learning_rate = 0.001
-num_steps = 200
+num_steps = 1000
 batch_size = 100
-display_step = 1
+display_step = 10
 
 # Network Parameters
 image_size = 128
@@ -102,7 +99,7 @@ weights = {
     'wc1': tf.Variable(tf.random_normal([5, 5, 3, 32])),
     # 5x5 conv, 32 inputs, 64 outputs
     'wc2': tf.Variable(tf.random_normal([5, 5, 32, 64])),
-    # fully connected, 7*7*64 inputs, 1024 outputs
+    # fully connected, 32*32*64 inputs, 1024 outputs
     'wd1': tf.Variable(tf.random_normal([32*32*64, 1024])),
     # 1024 inputs, 10 outputs (class prediction)
     'out': tf.Variable(tf.random_normal([1024, num_classes]))
@@ -117,17 +114,18 @@ biases = {
 
 # Construct model
 logits = conv_net(X, weights, biases, keep_prob)
-prediction = tf.nn.softmax(logits)
+prediction = tf.nn.sigmoid(logits)
+
 
 # Define loss and optimizer
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+loss_op = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
     logits=logits, labels=Y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 train_op = optimizer.minimize(loss_op)
 
 
 # Evaluate model
-correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
+correct_pred = tf.equal(tf.round(prediction), Y)
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 # Initialize the variables (i.e. assign their default value)
@@ -155,7 +153,7 @@ with tf.Session() as sess:
     print("Optimization Finished!")
 
     # Calculate accuracy for 256 MNIST test images
-    #print("Testing Accuracy:", \
-        #sess.run(accuracy, feed_dict={X: mnist.test.images[:256],
-                                      #Y: mnist.test.labels[:256],
-                                      #keep_prob: 1.0}))
+    print("Testing Accuracy:", \
+        sess.run(accuracy, feed_dict={X: x_test[:200],
+                                      Y: y_test[:200],
+                                      keep_prob: 1.0}))
